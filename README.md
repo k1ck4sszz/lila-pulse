@@ -108,9 +108,36 @@ Two paths, both documented in-app under **How to use**:
 1. **Browser (no setup):** in the left panel, drop `.nakama-0` / parquet files.
    They're parsed client-side and rendered immediately. Nothing is uploaded.
 2. **Permanent dataset:** drop new day-folders into your `player_data` directory
-   and re-run `npm run pipeline`. The tool reads whatever the pipeline emits, so
-   new maps/dates/matches appear automatically (add new maps to `MAP_CONFIG` in
-   `pipeline/process.py` and `src/lib/types.ts` mirrors them from the manifest).
+   and re-run `npm run pipeline`, then commit/push (auto-deploys). The UI reads
+   whatever the pipeline emits, so new dates/matches/maps appear automatically.
+
+### Adding more days/months (e.g. March, April)
+
+Just add the day folders and re-run the pipeline — dates, filters, heatmaps,
+per-day match counts and the month header all update from the manifest.
+
+Folder naming (the pipeline accepts all three):
+
+| Folder name | Resolves to | Use when |
+|---|---|---|
+| `February_10` | `2026-02-10` (year from `--year`, default 2026) | same-year data |
+| `February_10_2027` | `2027-02-10` | mixing years |
+| `2027-03-01` | `2027-03-01` | year-explicit, recommended long-term |
+
+For a different default year: `python pipeline/process.py --year 2027`.
+
+> **Scaling note:** the date picker is a chip list — great up to ~2–3 weeks. If
+> the dataset grows to multiple months of daily data, switch the chips for a
+> calendar/range widget (the deliberate next step, not needed yet).
+
+### Adding a new map
+
+A map needs a coordinate config that can't be inferred — add it to `MAP_CONFIG`
+in `pipeline/process.py` (`scale`, `originX`, `originZ`, `image`, `imageSize`,
+from the game's map metadata) and drop its minimap into `public/minimaps/`. The
+pipeline **loudly warns and skips** any map it sees in the data without a config,
+so you won't silently lose matches. The frontend reads maps from the manifest —
+no frontend change needed.
 
 ---
 

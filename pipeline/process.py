@@ -60,12 +60,28 @@ MONTHS = {  # folder name -> month number
 }
 
 
-def folder_to_date(folder: str) -> str | None:
-    """`February_10` -> `2026-02-10`. Returns None for non-day folders."""
-    m = re.match(r"([A-Za-z]+)_(\d+)", folder)
+DEFAULT_YEAR = 2026
+
+
+def folder_to_date(folder: str, year: int = DEFAULT_YEAR) -> str | None:
+    """Day-folder name -> ISO date, or None for non-day folders.
+
+    Accepts, in order of preference:
+      * `2026-02-10` / `2026_02_10`  (year explicit — future-proof, recommended)
+      * `February_10_2027`           (month name + day + explicit year)
+      * `February_10`                (month name + day; year from `year` arg)
+
+    The `year` arg only applies to the last form, so data from a new year is
+    handled either by naming folders with the year, or by passing --year.
+    """
+    iso = re.match(r"(\d{4})[-_](\d{1,2})[-_](\d{1,2})$", folder)
+    if iso:
+        return f"{int(iso[1]):04d}-{int(iso[2]):02d}-{int(iso[3]):02d}"
+    m = re.match(r"([A-Za-z]+)_(\d{1,2})(?:_(\d{4}))?$", folder)
     if not m or m.group(1) not in MONTHS:
         return None
-    return f"2026-{MONTHS[m.group(1)]:02d}-{int(m.group(2)):02d}"
+    yr = int(m.group(3)) if m.group(3) else year
+    return f"{yr:04d}-{MONTHS[m.group(1)]:02d}-{int(m.group(2)):02d}"
 
 
 def is_bot(user_id: str) -> bool:
@@ -102,7 +118,7 @@ def round_coord(v) -> float:
     return round(float(v), 1)
 
 
-def build(input_dir: str, out_dir: str) -> None:
+def build(input_dir: str, out_dir: str, year: int = DEFAULT_YEAR) -> None:
     match_dir = os.path.join(out_dir, "match")
     heat_dir = os.path.join(out_dir, "heatmap")
     os.makedirs(match_dir, exist_ok=True)
@@ -110,9 +126,9 @@ def build(input_dir: str, out_dir: str) -> None:
 
     day_folders = sorted(
         d for d in os.listdir(input_dir)
-        if os.path.isdir(os.path.join(input_dir, d)) and folder_to_date(d)
+        if os.path.isdir(os.path.join(input_dir, d)) and folder_to_date(d, year)
     )
-    dates = sorted({folder_to_date(d) for d in day_folders})
+    dates = sorted({folder_to_date(d, year) for d in day_folders})
     date_index = {d: i for i, d in enumerate(dates)}
 
     matches_meta: list[dict] = []
@@ -125,7 +141,7 @@ def build(input_dir: str, out_dir: str) -> None:
     # produce two entries / overwrite one file.
     frames = []
     for folder in day_folders:
-        date = folder_to_date(folder)
+        date = folder_to_date(folder, year)
         print(f"== {folder} ({date})")
         df = read_day(os.path.join(input_dir, folder))
         if df.empty:
@@ -136,6 +152,17 @@ def build(input_dir: str, out_dir: str) -> None:
         print("No data found.")
         return
     big = pd.concat(frames, ignore_index=True)
+
+    # Loudly flag any map present in the data but missing a coordinate config —
+    # otherwise its matches would be silently dropped. New maps need a
+    # scale/origin/image entry in MAP_CONFIG (a game-design constant).
+    unknown_maps = sorted(set(big["map_id"].unique()) - set(MAP_CONFIG))
+    if unknown_maps:
+        print("\n" + "!" * 60)
+        print(f"! UNKNOWN MAPS (no MAP_CONFIG): {', '.join(unknown_maps)}")
+        print("! Their matches are SKIPPED. Add scale/originX/originZ/image to")
+        print("! MAP_CONFIG in pipeline/process.py and drop the minimap image.")
+        print("!" * 60 + "\n")
 
     # heat points per map (each row keeps its own date index)
     for map_id, map_df in big.groupby("map_id"):
@@ -268,12 +295,15 @@ def main() -> None:
                     help="folder of day subfolders containing .nakama-0 parquet files")
     ap.add_argument("--out", default=os.path.join(repo, "public", "data"))
     ap.add_argument("--minimaps", default=os.path.join(repo, "public", "minimaps"))
+    ap.add_argument("--year", type=int, default=DEFAULT_YEAR,
+                    help="year for `Month_DD` folders without an explicit year "
+                         f"(default {DEFAULT_YEAR}); ignored for ISO-named folders")
     args = ap.parse_args()
 
     input_dir = os.path.abspath(args.input)
     print(f"Input : {input_dir}")
     print(f"Output: {os.path.abspath(args.out)}")
-    build(input_dir, args.out)
+    build(input_dir, args.out, args.year)
     copy_minimaps(input_dir, args.minimaps)
 
 
