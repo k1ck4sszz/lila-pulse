@@ -8,6 +8,10 @@ and match playback.
 > **Live demo:** **https://lila-pulse.vercel.app**
 > · **Source:** https://github.com/k1ck4sszz/lila-pulse
 
+> © 2026 Satya Prasad Nekkanti. Built as a take-home assignment and shared with
+> LILA Games **solely for evaluation**. Not licensed for production or commercial
+> use without written permission — see [LICENSE](LICENSE).
+
 ![Map analytics with traffic heatmap](docs/screenshot-analytics.png)
 
 ---
@@ -165,3 +169,11 @@ that matter most:
   match to a watchable ~12s at 1× and the readout shows raw match-ms.
 - **`y` is elevation** and is intentionally not plotted; the minimap is top-down
   `(x, z)` per the dataset README.
+
+---
+
+## License
+
+Proprietary — © 2026 Satya Prasad Nekkanti, all rights reserved. Shared with
+LILA Games solely to evaluate the author. Bundled LILA BLACK telemetry and
+minimaps are LILA Games' property. See [LICENSE](LICENSE).

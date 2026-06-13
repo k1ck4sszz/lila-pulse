@@ -1,0 +1,18 @@
+Copyright (c) 2026 Satya Prasad Nekkanti. All rights reserved.
+
+This repository ("LILA Pulse") and its source code were created by the author
+as a take-home assignment submission and are shared with LILA Games solely for
+the purpose of evaluating the author's candidacy.
+
+NO LICENSE IS GRANTED for any other use. Without the author's prior written
+permission, no person or entity may copy, modify, distribute, sublicense,
+deploy, or use this code or any derivative of it in production or for any
+commercial purpose.
+
+The LILA BLACK telemetry data and minimap images included in this repository
+are the property of LILA Games and are present only to make the evaluation
+build runnable; they are not licensed to the author or to any third party.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. The author is not liable for any claim, damages, or other liability
+arising from the software or its use.
