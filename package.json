@@ -1,0 +1,28 @@
+{
+  "name": "lila-pulse",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Player Journey Visualization Tool for LILA BLACK telemetry",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "pipeline": "python pipeline/process.py"
+  },
+  "dependencies": {
+    "hyparquet": "^1.10.0",
+    "hyparquet-compressors": "^1.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.7",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
