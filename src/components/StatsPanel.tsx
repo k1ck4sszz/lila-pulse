@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { Manifest, MatchData, MatchMeta } from "../lib/types";
 import type { Mode } from "../App";
 import { COLORS, CATEGORY_COLOR } from "../lib/palette";
+import { formatDayChip, formatDuration } from "../lib/format";
 
 interface Props {
   mode: Mode;
@@ -189,7 +190,9 @@ function Replay({
   match: MatchData | null;
 }) {
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<"players" | "loot" | "botKills">("players");
+  const [sort, setSort] = useState<
+    "players" | "loot" | "botKills" | "durationMs"
+  >("players");
 
   const list = useMemo(() => {
     const filtered = q
@@ -215,15 +218,15 @@ function Replay({
         placeholder="Search by match id…"
         className="mb-2 w-full rounded-md bg-base-800 px-3 py-1.5 text-xs ring-1 ring-white/10 focus:outline-none focus:ring-cyan-400/50"
       />
-      <div className="mb-2 flex gap-1 text-[11px]">
+      <div className="mb-2 flex gap-2 text-[11px]">
         <span className="text-slate-500">Sort:</span>
-        {(["players", "loot", "botKills"] as const).map((s) => (
+        {(["players", "loot", "botKills", "durationMs"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setSort(s)}
             className={sort === s ? "text-cyan-300" : "text-slate-400"}
           >
-            {s === "botKills" ? "kills" : s}
+            {s === "botKills" ? "kills" : s === "durationMs" ? "duration" : s}
           </button>
         ))}
       </div>
@@ -238,15 +241,18 @@ function Replay({
               <span className="font-mono text-[11px] text-slate-300">
                 {m.id.slice(0, 13)}…
               </span>
-              <span className="text-[10px] text-slate-500">{m.date.slice(5)}</span>
+              <span className="text-[10px] text-slate-500">
+                {formatDayChip(m.date)}
+              </span>
             </div>
-            <div className="mt-1 flex gap-2 text-[10px] text-slate-500">
+            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-slate-500">
               <span style={{ color: COLORS.human }}>{m.humans}P</span>
               <span style={{ color: COLORS.bot }}>{m.bots}B</span>
               <span style={{ color: CATEGORY_COLOR.loot }}>{m.loot} loot</span>
               <span style={{ color: CATEGORY_COLOR.kill }}>
                 {m.botKills} kills
               </span>
+              <span title="match duration">⏱ {formatDuration(m.durationMs)}</span>
             </div>
           </button>
         ))}
@@ -279,7 +285,7 @@ function MatchDetail({
       <div className="mb-3 rounded-lg bg-base-800/60 p-3 ring-1 ring-white/5">
         <div className="font-mono text-[11px] text-slate-400">{match.id}</div>
         <div className="mt-1 text-xs text-slate-500">
-          {prettyMap(match.map)} · {match.date} · {match.durationMs} ms
+          {prettyMap(match.map)} · {match.date} · {formatDuration(match.durationMs)}
         </div>
       </div>
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">

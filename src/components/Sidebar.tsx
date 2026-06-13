@@ -4,6 +4,7 @@ import type { HeatMetric } from "../lib/selectors";
 import type { MarkerCats, Mode } from "../App";
 import { COLORS, CATEGORY_COLOR } from "../lib/palette";
 import { loadDroppedFiles, type DroppedDataset } from "../lib/parquetLoader";
+import { formatDayChip, formatMonthYear } from "../lib/format";
 
 interface Props {
   manifest: Manifest;
@@ -12,6 +13,7 @@ interface Props {
   map: string;
   setMap: (m: string) => void;
   dates: string[];
+  dateCounts: Record<string, number>;
   selectedDates: Set<string>;
   setSelectedDates: (s: Set<string>) => void;
   uploaded: boolean;
@@ -78,32 +80,52 @@ export default function Sidebar(p: Props) {
 
       {!p.uploaded && (
         <Section title="Dates">
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">
+              {formatMonthYear(p.dates)}
+            </span>
+            <button
+              onClick={() => p.setSelectedDates(new Set())}
+              className={`rounded px-2 py-0.5 text-[11px] font-medium ring-1 transition ${
+                p.selectedDates.size === 0
+                  ? "bg-cyan-400/20 text-cyan-200 ring-cyan-400/40"
+                  : "bg-base-800 text-slate-400 ring-white/10 hover:bg-base-700"
+              }`}
+            >
+              All
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5">
             {p.dates.map((d) => {
               const on = p.selectedDates.has(d);
+              const count = p.dateCounts[d] ?? 0;
               return (
                 <button
                   key={d}
+                  disabled={count === 0}
                   onClick={() => {
                     const s = new Set(p.selectedDates);
                     if (on) s.delete(d);
                     else s.add(d);
                     p.setSelectedDates(s);
                   }}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium ring-1 transition ${
+                  className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium ring-1 transition disabled:cursor-not-allowed disabled:opacity-40 ${
                     on
                       ? "bg-cyan-400/20 text-cyan-200 ring-cyan-400/40"
-                      : "bg-base-800 text-slate-400 ring-white/10 hover:bg-base-700"
+                      : "bg-base-800 text-slate-300 ring-white/10 hover:bg-base-700"
                   }`}
                 >
-                  {d.slice(5)}
+                  <span>{formatDayChip(d)}</span>
+                  <span className="text-[10px] tabular-nums text-slate-500">
+                    {count} {count === 1 ? "match" : "matches"}
+                  </span>
                 </button>
               );
             })}
           </div>
           <p className="mt-1.5 text-[11px] text-slate-500">
             {p.selectedDates.size === 0
-              ? "All dates"
+              ? "Showing all dates on this map"
               : `${p.selectedDates.size} day(s) selected`}
           </p>
         </Section>

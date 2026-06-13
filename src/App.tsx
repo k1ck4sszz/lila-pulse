@@ -107,6 +107,16 @@ export default function App() {
     [allMetas, map, selectedDates],
   );
 
+  // match counts per date for the current map — drives the date-chip availability
+  const dateCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    for (const m of allMetas) {
+      if (m.map !== map) continue;
+      counts[m.date] = (counts[m.date] ?? 0) + 1;
+    }
+    return counts;
+  }, [allMetas, map]);
+
   // --- load selected match ------------------------------------------------
   useEffect(() => {
     if (!matchId) {
@@ -319,6 +329,7 @@ export default function App() {
             setMatchId(null);
           }}
           dates={dates}
+          dateCounts={dateCounts}
           selectedDates={selectedDates}
           setSelectedDates={setSelectedDates}
           uploaded={!!uploaded}

@@ -119,91 +119,100 @@ def build(input_dir: str, out_dir: str) -> None:
     heat_points: dict[str, list] = defaultdict(list)  # map -> rows
     totals = defaultdict(int)
 
+    # Read every day into one frame, tagging each row with its day. Matches are
+    # then grouped GLOBALLY by match_id — a match that straddles midnight (its
+    # files split across two day folders) must merge into a single match, not
+    # produce two entries / overwrite one file.
+    frames = []
     for folder in day_folders:
         date = folder_to_date(folder)
         print(f"== {folder} ({date})")
         df = read_day(os.path.join(input_dir, folder))
         if df.empty:
             continue
+        df["date"] = date
+        frames.append(df)
+    if not frames:
+        print("No data found.")
+        return
+    big = pd.concat(frames, ignore_index=True)
 
-        for map_id, map_df in df.groupby("map_id"):
-            if map_id not in MAP_CONFIG:
-                print(f"  ! unknown map {map_id} — skipped")
-                continue
-            di = date_index[date]
-            for _, row in map_df.iterrows():
-                heat_points[map_id].append([
-                    round_coord(row["x"]), round_coord(row["z"]),
-                    EVENT_CODES.get(row["event"], -1), di,
-                    1 if row["is_bot"] else 0,
-                ])
+    # heat points per map (each row keeps its own date index)
+    for map_id, map_df in big.groupby("map_id"):
+        if map_id not in MAP_CONFIG:
+            print(f"  ! unknown map {map_id} — skipped")
+            continue
+        for _, row in map_df.iterrows():
+            heat_points[map_id].append([
+                round_coord(row["x"]), round_coord(row["z"]),
+                EVENT_CODES.get(row["event"], -1), date_index[row["date"]],
+                1 if row["is_bot"] else 0,
+            ])
 
-        # Per-match files (one match may span multiple day folders only in
-        # theory; in this dataset matches live within a single day folder).
-        for match_id, mdf in df.groupby("match_id"):
-            map_id = mdf["map_id"].iloc[0]
-            if map_id not in MAP_CONFIG:
-                continue
-            t0 = mdf["ts"].min()
-            duration_ms = int((mdf["ts"].max() - t0).total_seconds() * 1000)
+    for match_id, mdf in big.groupby("match_id"):
+        map_id = mdf["map_id"].iloc[0]
+        if map_id not in MAP_CONFIG:
+            continue
+        match_date = mdf["date"].min()  # earliest day the match appears
+        t0 = mdf["ts"].min()
+        duration_ms = int((mdf["ts"].max() - t0).total_seconds() * 1000)
 
-            players = []
-            counts = defaultdict(int)
-            for user_id, pdf in mdf.groupby("user_id"):
-                pdf = pdf.sort_values("ts")
-                bot = bool(pdf["is_bot"].iloc[0])
-                path = []
-                events = []
-                p_counts = defaultdict(int)
-                for _, r in pdf.iterrows():
-                    t = int((r["ts"] - t0).total_seconds() * 1000)
-                    ev = r["event"]
-                    x, z = round_coord(r["x"]), round_coord(r["z"])
-                    counts[ev] += 1
-                    p_counts[ev] += 1
-                    if ev in POSITION_EVENTS:
-                        path.append([x, z, t])
-                    else:
-                        events.append({"type": EVENT_CODES.get(ev, -1),
-                                       "x": x, "z": z, "t": t})
-                players.append({
-                    "id": str(user_id),
-                    "isBot": bot,
-                    "path": path,
-                    "events": events,
-                    "kills": p_counts["Kill"] + p_counts["BotKill"],
-                    "deaths": p_counts["Killed"] + p_counts["BotKilled"]
-                              + p_counts["KilledByStorm"],
-                    "loot": p_counts["Loot"],
-                })
+        players = []
+        counts = defaultdict(int)
+        for user_id, pdf in mdf.groupby("user_id"):
+            pdf = pdf.sort_values("ts")
+            bot = bool(pdf["is_bot"].iloc[0])
+            path = []
+            events = []
+            p_counts = defaultdict(int)
+            for _, r in pdf.iterrows():
+                t = int((r["ts"] - t0).total_seconds() * 1000)
+                ev = r["event"]
+                x, z = round_coord(r["x"]), round_coord(r["z"])
+                counts[ev] += 1
+                p_counts[ev] += 1
+                if ev in POSITION_EVENTS:
+                    path.append([x, z, t])
+                else:
+                    events.append({"type": EVENT_CODES.get(ev, -1),
+                                   "x": x, "z": z, "t": t})
+            players.append({
+                "id": str(user_id),
+                "isBot": bot,
+                "path": path,
+                "events": events,
+                "kills": p_counts["Kill"] + p_counts["BotKill"],
+                "deaths": p_counts["Killed"] + p_counts["BotKilled"]
+                          + p_counts["KilledByStorm"],
+                "loot": p_counts["Loot"],
+            })
 
-            humans = sum(1 for p in players if not p["isBot"])
-            bots = sum(1 for p in players if p["isBot"])
-            meta = {
-                "id": match_id,
-                "map": map_id,
-                "date": date,
-                "players": len(players),
-                "humans": humans,
-                "bots": bots,
-                "durationMs": duration_ms,
-                "positions": counts["Position"] + counts["BotPosition"],
-                "kills": counts["Kill"],
-                "killed": counts["Killed"],
-                "botKills": counts["BotKill"],
-                "botKilled": counts["BotKilled"],
-                "storm": counts["KilledByStorm"],
-                "loot": counts["Loot"],
-            }
-            matches_meta.append(meta)
-            for k, v in counts.items():
-                totals[k] += v
+        humans = sum(1 for p in players if not p["isBot"])
+        bots = sum(1 for p in players if p["isBot"])
+        matches_meta.append({
+            "id": match_id,
+            "map": map_id,
+            "date": match_date,
+            "players": len(players),
+            "humans": humans,
+            "bots": bots,
+            "durationMs": duration_ms,
+            "positions": counts["Position"] + counts["BotPosition"],
+            "kills": counts["Kill"],
+            "killed": counts["Killed"],
+            "botKills": counts["BotKill"],
+            "botKilled": counts["BotKilled"],
+            "storm": counts["KilledByStorm"],
+            "loot": counts["Loot"],
+        })
+        for k, v in counts.items():
+            totals[k] += v
 
-            with open(os.path.join(match_dir, f"{match_id}.json"), "w") as f:
-                json.dump({
-                    "id": match_id, "map": map_id, "date": date,
-                    "durationMs": duration_ms, "players": players,
-                }, f, separators=(",", ":"))
+        with open(os.path.join(match_dir, f"{match_id}.json"), "w") as f:
+            json.dump({
+                "id": match_id, "map": map_id, "date": match_date,
+                "durationMs": duration_ms, "players": players,
+            }, f, separators=(",", ":"))
 
     # heatmap files per map
     for map_id, rows in heat_points.items():

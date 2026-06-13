@@ -1,7 +1,7 @@
 # Three things I learned about the game (using LILA Pulse)
 
 All numbers below come straight from the bundled dataset (Feb 10–14, 2026 ·
-797 matches · 89,104 events) and are reproducible in the tool.
+796 matches · 89,104 events) and are reproducible in the tool.
 
 ---
 
@@ -13,7 +13,7 @@ human-vs-human combat is almost empty, while "Death zones" against bots lights u
 **Evidence:**
 - Across all 5 days: **human kills = 3, human deaths to other humans = 3**, vs
   **bot kills = 2,415** and **player deaths to bots = 700**.
-- **780 of 797 matches (98%) contain exactly one human player**; 16 are all-bot;
+- **779 of 796 matches (98%) contain exactly one human player**; 16 are all-bot;
   only **1 match has 2 humans**.
 
 So players almost never encounter each other. The extraction-shooter PvP fantasy
@@ -70,10 +70,10 @@ the underused storm means late-game pressure is coming from bots, not design.
 three maps are nearly unused, and daily match counts shrink across the window.
 
 **Evidence:**
-- Match distribution: **AmbroseValley 567 (71%)**, Lockdown 171 (21%),
+- Match distribution: **AmbroseValley 566 (71%)**, Lockdown 171 (21%),
   **GrandRift 59 (7%)**. Loot/combat volume follow the same split (Ambrose:
   9,955 loot / 1,797 bot-kills; GrandRift: 880 / 192).
-- Matches per day: **285 → 201 → 162 → 112** on Feb 10–13 (Feb 14 is a partial
+- Matches per day: **285 → 200 → 162 → 112** on Feb 10–13 (Feb 14 is a partial
   capture day at 37), a steady decline of roughly a third per day.
 
 **Actionable?** Yes.
