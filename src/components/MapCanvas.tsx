@@ -149,15 +149,24 @@ export default function MapCanvas({ layers }: { layers: CanvasLayers }) {
             ? p.path
             : p.path.filter((pt) => pt[2] <= layers.playhead!);
         if (pts.length < 2) continue;
-        ctx.beginPath();
-        for (let i = 0; i < pts.length; i++) {
-          const [sx, sy] = toScreen(pts[i][0], pts[i][1]);
-          if (i === 0) ctx.moveTo(sx, sy);
-          else ctx.lineTo(sx, sy);
-        }
-        ctx.strokeStyle = p.isBot ? COLORS.botDim : COLORS.humanDim;
+        // Time-graded trajectory (after Drachen et al., Game Analytics Ch.14):
+        // brightness ramps along the journey so direction & recency read at a
+        // glance, while hue still encodes human (cyan) vs bot (amber).
+        const rgb = p.isBot ? "245,158,11" : "34,211,238";
         ctx.lineWidth = p.isBot ? 1.5 : 2.2;
-        ctx.stroke();
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        const n = pts.length - 1;
+        for (let i = 0; i < n; i++) {
+          const [ax, ay] = toScreen(pts[i][0], pts[i][1]);
+          const [bx, by] = toScreen(pts[i + 1][0], pts[i + 1][1]);
+          const alpha = 0.12 + 0.78 * ((i + 1) / n);
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.strokeStyle = `rgba(${rgb},${alpha.toFixed(3)})`;
+          ctx.stroke();
+        }
 
         // head dot at current position
         const last = pts[pts.length - 1];

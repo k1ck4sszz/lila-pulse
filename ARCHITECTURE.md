@@ -75,6 +75,27 @@ pipeline mental model. Key details I made sure to get right:
 - On top of the fixed image-space transform sits a **view transform**
   (pan/zoom) so designers can inspect dense areas; zoom is cursor-anchored.
 
+## Visualization techniques (grounded in the reference material)
+
+The viz choices follow established game-telemetry practice rather than being
+invented from scratch:
+
+- **Density-kernel heatmaps** for kill/death/traffic lethality maps, with a
+  green→red intensity scale — the approach used for *Tomb Raider: Underworld* /
+  *Kane & Lynch* (Drachen, Canossa & Sørensen, *Game Analytics* Ch.14) and AC's
+  "pointmap" (Ubisoft DNA tracking). I use a radial-blob kernel rather than raw
+  grid-cell summing because it reads better at arbitrary zoom.
+- **Time-graded player trajectories** — paths brighten from start to latest
+  position, directly after Ch.14 Fig. 14.14 (player path between events, colored
+  along the time dimension). Hue still encodes human vs bot.
+- **Cause-of-death separation** (bot vs storm vs human) surfaced in stats and as
+  distinct markers, mirroring Ch.14's overlay analysis of death causes.
+- **Map-overlay + filters** as the primary surface (vs tables), per Ubisoft's
+  DNA-Live, so designers explore spatially and filter to a question.
+- General BI charts (line/funnel/Sankey from the GameAnalytics article) were
+  intentionally left out — they answer business questions, not level-design
+  ones, and would dilute a focused tool.
+
 ## Assumptions
 
 | Ambiguity | Decision |

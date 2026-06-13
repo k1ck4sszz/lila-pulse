@@ -38,9 +38,10 @@ export default function HelpModal({ onClose }: Props) {
           stats update instantly.
         </Step>
         <Step n="3" title="Read the map">
-          Cyan = human players, amber = bots. Markers: ◆ kill, ✕ death, ▣ loot,
-          ▲ storm death. Toggle any layer on the left. Hover a marker for
-          details.
+          Cyan = human players, amber = bots. Paths <b>brighten from start →
+          latest position</b>, so you can read direction and recency at a
+          glance. Markers: ◆ kill, ✕ death, ▣ loot, ▲ storm death. Toggle any
+          layer on the left. Hover a marker for details.
         </Step>
         <Step n="4" title="Heatmaps">
           Turn on the heatmap and switch the metric (traffic, kill zones, death
