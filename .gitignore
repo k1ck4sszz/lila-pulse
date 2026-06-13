@@ -6,3 +6,5 @@ dist
 .netlify
 __pycache__
 *.pyc
+
+.vercel

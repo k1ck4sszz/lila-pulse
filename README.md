@@ -5,8 +5,8 @@ files) into something a **level designer** can open in the browser and actually
 use: player paths on the real minimap, kill/death/loot/storm markers, heatmaps,
 and match playback.
 
-> **Live demo:** _add your deployed URL here after running the deploy step
-> below (Vercel/Netlify)._
+> **Live demo:** **https://lila-pulse.vercel.app**
+> · **Source:** https://github.com/k1ck4sszz/lila-pulse
 
 ![Map analytics with traffic heatmap](docs/screenshot-analytics.png)
 
